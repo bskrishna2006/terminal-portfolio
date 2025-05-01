@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Portfolio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            color: #33ff00;
+            font-size: 14px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            height: 85vh;
+            background: #000000;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(51, 255, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .terminal_toolbar {
+            display: flex;
+            height: 35px;
+            align-items: center;
+            padding: 0 15px;
+            background: #2d2d2d;
+            justify-content: space-between;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        .butt {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-close { background: #ff5f56; }
+        .btn-minimize { background: #ffbd2e; }
+        .btn-expand { background: #27c93f; }
+
+        .title {
+            color: #9d9d9d;
+            font-size: 14px;
+        }
+
+        .terminal_body {
+            height: calc(100% - 35px);
+            background: #000000;
+            padding: 15px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #33ff00 #000000;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .terminal_body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal_body::-webkit-scrollbar-track {
+            background: #000000;
+        }
+
+        .terminal_body::-webkit-scrollbar-thumb {
+            background: #33ff00;
+            border-radius: 4px;
+        }
+
+        .terminal_prompt {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .terminal_prompt--user {
+            color: #33ff00;
+        }
+
+        .terminal_prompt--location {
+            color: #4878c0;
+        }
+
+        .terminal_prompt--bling {
+            color: #33ff00;
+            margin: 0 5px;
+        }
+
+        #commandInput {
+            background: transparent;
+            border: none;
+            color: #33ff00;
+            font-family: inherit;
+            font-size: inherit;
+            outline: none;
+            margin-left: 8px;
+            min-width: 200px;
+            width: calc(100% - 300px);
+            caret-color: #33ff00;
+        }
+
+        .output-line {
+            color: #33ff00;
+            margin: 4px 0;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+            transform-origin: top;
+            transform: translateY(10px);
+            animation: fadeInUp 0.3s forwards ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .suggestion-box {
+            margin-top: 5px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .error-output {
+            color: #ff5f56;
+        }
+
+        .success-output {
+            color: #27c93f;
+        }
+
+        .suggestion-highlight {
+            color: #4878c0;
+            animation: suggestionPulse 2s infinite;
+        }
+
+        .command-block {
+            margin: 8px 0;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(51, 255, 0, 0.1);
+            opacity: 0;
+            animation: slideIn 0.3s forwards ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes suggestionPulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background: #33ff00;
+            margin-left: 5px;
+            animation: blink 1s infinite;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+                height: 90vh;
+            }
+        }
+
+        .ascii-art {
+            color: #33ff00;
+            font-family: monospace;
+            white-space: pre;
+            margin: 10px 0;
+            opacity: 0.8;
+            font-size: 10px;
+            line-height: 1.2;
+        }
+
+        .highlight {
+            color: #ffbd2e;
+        }
+
+        .section-title {
+            color: #4878c0;
+            margin: 10px 0;
+        }
+
+        .model-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .model-loading {
+            background: #ffbd2e;
+            color: #000;
+        }
+
+        .model-ready {
+            background: #27c93f;
+            color: #000;
+        }
+
+        .model-error {
+            background: #ff5f56;
+            color: #fff;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #000;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 5px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 5px 0;
+            opacity: 0;
+            animation: fadeIn 0.2s forwards;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #33ff00;
+            border-radius: 50%;
+            animation: bounce 1s infinite;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .smooth-scroll {
+            transition: all 0.3s ease-out;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
+</head>
+<body>
+    <div id="modelStatus" class="model-status model-loading">
+        <span class="loading-spinner"></span>
+        Loading ML Model...
+    </div>
+    <div class="container">
+        <div class="terminal_toolbar">
+            <div class="butt">
+                <button class="btn btn-close"></button>
+                <button class="btn btn-minimize"></button>
+                <button class="btn btn-expand"></button>
+            </div>
+            <div class="title">krishna@portfolio: ~/workspace</div>
+            <div></div>
+        </div>
+        <div class="terminal_body">
+            <div class="ascii-art">
+ ██╗  ██╗██████╗ ██╗███████╗██╗  ██╗███╗   ██╗ █████╗ ███████╗    ██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗ 
+ ██║ ██╔╝██╔══██╗██║██╔════╝██║  ██║████╗  ██║██╔══██╗██╔════╝    ██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝██╔═══██╗██║     ██║██╔═══██╗
+ █████╔╝ ██████╔╝██║███████╗███████║██╔██╗ ██║███████║███████╗    ██████╔╝██║   ██║██████╔╝   ██║   █████╗  ██║   ██║██║     ██║██║   ██║
+ ██╔═██╗ ██╔══██╗██║╚════██║██╔══██║██║╚██╗██║██╔══██║╚════██║    ██╔═══╝ ██║   ██║██╔══██╗   ██║   ██╔══╝  ██║   ██║██║     ██║██║   ██║
+ ██║  ██╗██║  ██║██║███████║██║  ██║██║ ╚████║██║  ██║███████║    ██║     ╚██████╔╝██║  ██║   ██║   ██║     ╚██████╔╝███████╗██║╚██████╔╝
+ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝ 
+            </div>
+            <div class="output-line success-output">Welcome to Krishna's Portfolio Terminal! Type 'help' to see available commands.</div>
+            <div id="output"></div>
+            <div class="terminal_prompt">
+                <span class="terminal_prompt--user">krishna@portfolio</span>
+                <span class="terminal_prompt--location">~/workspace</span>
+                <span class="terminal_prompt--bling">$</span>
+                <input type="text" id="commandInput" autofocus spellcheck="false" />
+                <span class="cursor"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const commands = {
+            help: {
+                description: 'List all available commands',
+                execute: () => {
+                    return `Available commands:
+                    \n${Object.entries(commands)
+                        .filter(([cmd]) => !cmd.includes(' ')) // Only show single-word commands
+                        .map(([cmd, info]) => `${cmd.padEnd(15)} - ${info.description}`)
+                        .join('\n')}
+                    \nTip: You can also ask questions naturally like:
+                    • "Tell me about yourself"
+                    • "What are your skills?"
+                    • "Show me your projects"
+                    • "How can I contact you?"`;
+                }
+            },
+            about: {
+                description: 'Learn about me',
+                execute: () => `I'm Krishna, a passionate Computer Science and Business Systems student at Sri Eshwar College of Engineering.
+                \n<span class="highlight">My core strengths:</span>
+                • Full-stack development with MERN stack
+                • Machine Learning and Computer Vision
+                • Problem-solving and algorithmic thinking
+                • Strong foundation in C++, Python, and JavaScript
+                \nI'm driven by the desire to create innovative solutions that make a real impact. Currently exploring the intersection of AI and web technologies.`
+            },
+            skills: {
+                description: 'View my technical skills',
+                execute: () => `<span class="section-title">Technical Skills:</span>
+                \n💻 Programming Languages:
+                • C++ (Advanced) - Data Structures & Algorithms
+                • Python (Intermediate) - ML/CV Applications
+                • JavaScript/TypeScript (Intermediate) - Full-stack Development
+                • Java (Intermediate) - Android Development
+                \n🛠 Frameworks & Technologies:
+                • Frontend: React.js + Vite
+                • Backend: Node.js, Express.js, MongoDB
+                • ML/AI: TensorFlow, OpenCV, CNN
+                • Tools: Git and GitHub
+                \n📚 Currently Learning:
+                • MLOps and AI Engineering`
+            },
+            projects: {
+                description: 'View my projects',
+                execute: () => `<span class="section-title">Notable Projects:</span>
+                \n1. 👁️ Driver Drowsiness Detection System
+                • Built CNN model for real-time facial feature detection
+                • Implemented alert system with 94% accuracy
+                • Tech: Python, TensorFlow, OpenCV, Flask
+                • Deployed on edge devices for real-world testing
+                \n2. 🚀 Startup Helping Platform
+                • Full-stack platform connecting startups with mentors
+                • Features: Resource sharing, networking, event management
+                • Tech: MERN Stack, AWS, Stripe integration
+                • Active user base of 500+ entrepreneurs
+                \n3. 📝 MERN Notes App
+                • Real-time collaborative note-taking platform
+                • Rich text editor with markdown support
+                • Tech: React, Node.js, MongoDB`
+            },
+            contact: {
+                description: 'Get my contact information',
+                execute: () => `<span class="section-title">Let's Connect!</span>
+                \n📧 Email: bskrishna3406@gmail.com
+                🔗 LinkedIn: https://www.linkedin.com/in/bs-krishna/
+                💻 GitHub: https://github.com/bskrishna2006/
+                \nI'm always open to discussing new opportunities and collaborations!`
+            },
+            education: {
+                description: 'View my educational background',
+                execute: () => `<span class="section-title">Education:</span>
+                \n🎓 B.Tech in Computer Science and Business Systems
+                • Sri Eshwar College of Engineering
+                • 2023 - 2027
+                • CGPA: 8.0/10
+                \n📚 Key Coursework:
+                • Data Structures and Algorithms
+                • Database Management Systems
+                • Machine Learning Fundamentals
+                • Web Technologies`
+            },
+            hi: {
+                description: 'Say hello',
+                execute: () => "Hello! 👋 I'm Krishna's AI assistant. How can I help you today?"
+            },
+            hello: {
+                description: 'Say hello (alias for hi)',
+                execute: () => commands.hi.execute()
+            },
+            clear: {
+                description: 'Clear the terminal',
+                execute: () => {
+                    document.getElementById('output').innerHTML = '';
+                    return '';
+                }
+            },
+            cls: {
+                description: 'Clear the terminal (alias for clear)',
+                execute: () => commands.clear.execute()
+            }
+        };
+
+        let commandHistory = [];
+        let historyIndex = -1;
+        let currentInput = '';
+
+        const input = document.getElementById('commandInput');
+        const output = document.getElementById('output');
+
+        function addOutput(content, className = 'output-line') {
+            const commandBlock = document.createElement('div');
+            commandBlock.className = 'command-block';
+            
+            const line = document.createElement('div');
+            line.className = className;
+            line.innerHTML = content;
+            
+            // Add a small delay before adding the element
+            setTimeout(() => {
+                commandBlock.appendChild(line);
+                output.appendChild(commandBlock);
+                smoothScrollToBottom();
+            }, 50);
+        }
+
+        function smoothScrollToBottom() {
+            const terminal = document.querySelector('.terminal_body');
+            const scrollHeight = terminal.scrollHeight;
+            const currentScroll = terminal.scrollTop;
+            const targetScroll = scrollHeight - terminal.clientHeight;
+            
+            if (targetScroll <= currentScroll) return; // Already at bottom
+
+            const startTime = performance.now();
+            const duration = 300; // ms
+
+            function scroll(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Easing function for smooth deceleration
+                const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+                
+                terminal.scrollTop = currentScroll + (targetScroll - currentScroll) * easeOutCubic;
+
+                if (progress < 1) {
+                    requestAnimationFrame(scroll);
+                }
+            }
+
+            requestAnimationFrame(scroll);
+        }
+
+        // Levenshtein distance calculation for fuzzy matching
+        function levenshteinDistance(str1, str2) {
+            const track = Array(str2.length + 1).fill(null).map(() =>
+                Array(str1.length + 1).fill(null));
+
+            for (let i = 0; i <= str1.length; i++) track[0][i] = i;
+            for (let j = 0; j <= str2.length; j++) track[j][0] = j;
+
+            for (let j = 1; j <= str2.length; j++) {
+                for (let i = 1; i <= str1.length; i++) {
+                    const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                    track[j][i] = Math.min(
+                        track[j][i - 1] + 1,
+                        track[j - 1][i] + 1,
+                        track[j - 1][i - 1] + indicator
+                    );
+                }
+            }
+            return track[str2.length][str1.length];
+        }
+
+        function findClosestCommand(input) {
+            const threshold = 3;
+            let closest = null;
+            let minDistance = Infinity;
+
+            Object.keys(commands).forEach(cmd => {
+                const distance = levenshteinDistance(input.toLowerCase(), cmd.toLowerCase());
+                if (distance < minDistance && distance <= threshold) {
+                    minDistance = distance;
+                    closest = cmd;
+                }
+            });
+
+            return closest;
+        }
+
+        // Enhanced Knowledge Base with more dynamic information
+        const krishnaKB = {
+            personal: {
+                name: "Krishna",
+                role: "Computer Science Student",
+                college: "Sri Eshwar College of Engineering",
+                year: "Second Year",
+                course: "B.Tech in Computer Science and Business Systems",
+                interests: ["Full-stack Development", "Machine Learning", "Computer Vision", "Problem Solving"],
+                strengths: ["Quick learner", "Team player", "Innovative problem solver", "Passionate about technology"],
+                goals: ["Mastering full-stack development", "Contributing to open source", "Building impactful AI solutions"]
+            },
+            technical: {
+                languages: {
+                    "C++": {
+                        level: "Advanced",
+                        focus: ["Data Structures", "Algorithms", "Competitive Programming"],
+                        experience: "3 years"
+                    },
+                    "Python": {
+                        level: "Intermediate",
+                        focus: ["Machine Learning", "Computer Vision", "Flask"],
+                        experience: "2 years"
+                    },
+                    "JavaScript": {
+                        level: "Intermediate",
+                        focus: ["React", "Node.js", "Full-stack Development"],
+                        experience: "2 years"
+                    }
+                },
+                frameworks: {
+                    frontend: ["React.js", "Vite"],
+                    backend: ["Node.js", "Express.js", "Flask"],
+                    database: ["MongoDB", "MySQL"],
+                    ml: ["TensorFlow", "OpenCV", "scikit-learn"]
+                },
+                projects: {
+                    "Driver Drowsiness Detection": {
+                        type: "Machine Learning",
+                        tech: ["Python", "TensorFlow", "OpenCV", "Flask"],
+                        features: [
+                            "Real-time facial feature detection",
+                            "94% accuracy in drowsiness detection",
+                            "Alert system integration",
+                            "Edge device deployment"
+                        ],
+                        impact: "Can help prevent road accidents due to driver fatigue"
+                    },
+                    "Startup Platform": {
+                        type: "Web Application",
+                        tech: ["MERN Stack", "Stripe"],
+                        features: [
+                            "Mentor-startup matching",
+                            "Resource sharing platform",
+                            "Event management",
+                            "Payment integration"
+                        ],
+                        impact: "Helping early-stage startups connect with mentors"
+                    },
+                    "MERN Notes": {
+                        type: "Web Application",
+                        tech: ["React", "Node.js", "MongoDB", "Socket.io"],
+                        features: [
+                            "Real-time collaboration",
+                            "Rich text editing",
+                            "Cloud storage",
+                            "Sharing capabilities"
+                        ]
+                    }
+                }
+            },
+            education: {
+                current: {
+                    degree: "B.Tech",
+                    field: "Computer Science and Business Systems",
+                    institution: "Sri Eshwar College of Engineering",
+                    period: "2022-2026",
+                    cgpa: 8.9,
+                    keySubjects: [
+                        "Data Structures and Algorithms",
+                        "Database Management Systems",
+                        "Machine Learning",
+                        "Web Technologies",
+                        "Business Analytics"
+                    ]
+                }
+            },
+            responses: {
+                technical_elaborations: {
+                    "MERN": "MERN stands for MongoDB, Express.js, React, and Node.js. It's a full-stack JavaScript framework I'm proficient in. I've used it to build several projects including my Startup Platform.",
+                    "ML/CV": "My experience in Machine Learning and Computer Vision includes building real-world applications like the Driver Drowsiness Detection system using TensorFlow and OpenCV.",
+                    "competitive_programming": "I actively participate in coding competitions on platforms like LeetCode and CodeForces, focusing on algorithmic problem-solving using C++."
+                },
+                project_details: {
+                    "drowsiness_detection": {
+                        challenges: "The main challenges included optimizing the model for real-time performance and handling varying lighting conditions.",
+                        implementation: "I used a CNN architecture trained on a custom dataset of ~10,000 images, achieving 94% accuracy.",
+                        learning: "This project taught me about model optimization, deployment challenges, and the importance of robust error handling."
+                    },
+                    "startup_platform": {
+                        challenges: "Implementing real-time features and handling concurrent user sessions were the main challenges.",
+                        implementation: "Used Socket.io for real-time updates and implemented caching with Redis for better performance.",
+                        learning: "Gained deep insights into scalability, user authentication, and payment integration."
+                    }
+                }
+            }
+        };
+
+        // Conversation Context System
+        class ConversationContext {
+            constructor() {
+                this.context = [];
+                this.maxContextLength = 5;
+            }
+
+            addToContext(message, response) {
+                this.context.unshift({ message, response, timestamp: Date.now() });
+                if (this.context.length > this.maxContextLength) {
+                    this.context.pop();
+                }
+            }
+
+            getRelevantContext(currentQuery) {
+                return this.context
+                    .filter(ctx => this.isRelevantToQuery(currentQuery, ctx))
+                    .slice(0, 2);
+            }
+
+            isRelevantToQuery(query, contextItem) {
+                const queryWords = query.toLowerCase().split(' ');
+                const contextWords = contextItem.message.toLowerCase().split(' ');
+                return queryWords.some(word => 
+                    contextWords.includes(word) && word.length > 3
+                );
+            }
+
+            hasRecentlyDiscussed(topic, timeWindowMs = 60000) {
+                const now = Date.now();
+                return this.context.some(ctx => 
+                    ctx.message.toLowerCase().includes(topic.toLowerCase()) &&
+                    now - ctx.timestamp < timeWindowMs
+                );
+            }
+        }
+
+        // Initialize conversation context
+        const conversationContext = new ConversationContext();
+
+        // Enhanced Natural Language Understanding
+        const NLU = {
+            intents: {
+                greetings: {
+                    patterns: ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"],
+                    responses: [
+                        "Hello! 👋 I'm Krishna's AI assistant. How can I help you today?",
+                        "Hi there! I'd be happy to tell you about Krishna's experience and projects.",
+                        "Hey! Feel free to ask me anything about Krishna's background or work."
+                    ]
+                },
+                personal: {
+                    patterns: ["who are you", "tell me about yourself", "introduce yourself", "your background"],
+                    followups: ["what are your interests", "what motivates you", "what drives you"]
+                },
+                technical: {
+                    patterns: ["technical skills", "programming languages", "frameworks", "tools"],
+                    followups: ["how did you learn", "which is your favorite", "most challenging"]
+                },
+                projects: {
+                    patterns: ["projects", "what have you built", "show me your work"],
+                    followups: ["how did you build", "what challenges", "tech stack used"]
+                }
+            },
+
+            // Improved intent detection with confidence scoring
+            detectIntent(query) {
+                query = query.toLowerCase();
+                let bestMatch = {
+                    intent: null,
+                    confidence: 0,
+                    isFollowup: false
+                };
+
+                // Check each intent
+                for (const [intent, data] of Object.entries(this.intents)) {
+                    // Check main patterns
+                    const mainConfidence = this.calculatePatternConfidence(query, data.patterns);
+                    
+                    // Check followup patterns if they exist
+                    const followupConfidence = data.followups ? 
+                        this.calculatePatternConfidence(query, data.followups) : 0;
+
+                    const confidence = Math.max(mainConfidence, followupConfidence);
+                    
+                    if (confidence > bestMatch.confidence) {
+                        bestMatch = {
+                            intent,
+                            confidence,
+                            isFollowup: followupConfidence > mainConfidence
+                        };
+                    }
+                }
+
+                return bestMatch;
+            },
+
+            calculatePatternConfidence(query, patterns) {
+                let maxConfidence = 0;
+                
+                for (const pattern of patterns) {
+                    // Exact match
+                    if (query === pattern) return 1.0;
+                    
+                    // Contains full pattern
+                    if (query.includes(pattern)) {
+                        maxConfidence = Math.max(maxConfidence, 0.8);
+                        continue;
+                    }
+                    
+                    // Word overlap
+                    const queryWords = query.split(' ');
+                    const patternWords = pattern.split(' ');
+                    const overlap = queryWords.filter(word => 
+                        patternWords.includes(word)
+                    ).length;
+                    
+                    const overlapScore = overlap / Math.max(queryWords.length, patternWords.length);
+                    maxConfidence = Math.max(maxConfidence, overlapScore);
+                }
+                
+                return maxConfidence;
+            },
+
+            // Extract entities from query
+            extractEntities(query) {
+                const entities = {
+                    technologies: [],
+                    projects: [],
+                    topics: []
+                };
+
+                // Technology detection
+                const techKeywords = Object.keys(krishnaKB.technical.languages)
+                    .concat(krishnaKB.technical.frameworks.frontend)
+                    .concat(krishnaKB.technical.frameworks.backend)
+                    .concat(krishnaKB.technical.frameworks.database)
+                    .concat(krishnaKB.technical.frameworks.ml);
+
+                techKeywords.forEach(tech => {
+                    if (query.toLowerCase().includes(tech.toLowerCase())) {
+                        entities.technologies.push(tech);
+                    }
+                });
+
+                // Project detection
+                Object.keys(krishnaKB.technical.projects).forEach(project => {
+                    if (query.toLowerCase().includes(project.toLowerCase())) {
+                        entities.projects.push(project);
+                    }
+                });
+
+                // Topic detection
+                const topics = ['education', 'experience', 'skills', 'background', 'contact'];
+                topics.forEach(topic => {
+                    if (query.toLowerCase().includes(topic)) {
+                        entities.topics.push(topic);
+                    }
+                });
+
+                return entities;
+            }
+        };
+
+        // Personality and Response Enhancement System
+        const PersonalitySystem = {
+            traits: {
+                enthusiasm: 0.8,
+                formality: 0.6,
+                helpfulness: 0.9,
+                techFocus: 0.7
+            },
+
+            emotions: {
+                positive: ['excited', 'happy', 'enthusiastic', 'passionate'],
+                neutral: ['focused', 'analytical', 'thoughtful'],
+                technical: ['precise', 'detailed', 'systematic']
+            },
+
+            transitionPhrases: {
+                elaboration: [
+                    "Let me elaborate on that",
+                    "I can provide more details about",
+                    "That's an interesting point about",
+                    "Speaking of",
+                    "To dive deeper into"
+                ],
+                contrast: [
+                    "On the other hand",
+                    "However, it's worth noting",
+                    "Interestingly though",
+                    "While that's true"
+                ],
+                addition: [
+                    "Additionally",
+                    "Moreover",
+                    "Furthermore",
+                    "I should also mention"
+                ]
+            },
+
+            getEmotionalTone(query, intent) {
+                if (intent === 'technical' || query.includes('how') || query.includes('explain')) {
+                    return this.emotions.technical[Math.floor(Math.random() * this.emotions.technical.length)];
+                }
+                if (query.includes('excited') || query.includes('love') || query.includes('passion')) {
+                    return this.emotions.positive[Math.floor(Math.random() * this.emotions.positive.length)];
+                }
+                return this.emotions.neutral[Math.floor(Math.random() * this.emotions.neutral.length)];
+            },
+
+            addPersonality(response, query, intent) {
+                const emotion = this.getEmotionalTone(query, intent);
+                const enthusiasm = Math.random() < this.traits.enthusiasm;
+                
+                // Add emotional context
+                if (enthusiasm) {
+                    response = `I'm feeling ${emotion} about this! ${response}`;
+                }
+                
+                // Add technical precision for technical queries
+                if (intent === 'technical' && Math.random() < this.traits.techFocus) {
+                    response += `\n\nFrom a technical perspective, I always emphasize the importance of understanding the underlying concepts.`;
+                }
+                
+                // Add helpful suggestions
+                if (Math.random() < this.traits.helpfulness) {
+                    response += `\n\nFeel free to ask me more specific questions about any aspect you're interested in!`;
+                }
+                
+                return response;
+            }
+        };
+
+        // Dynamic Response Generator
+        const DynamicResponseGenerator = {
+            generateResponse(query, intent, entities, context) {
+                let response = '';
+                
+                // Start with base response from existing system
+                if (intent.confidence > 0.8) {
+                    response = this.getHighConfidenceResponse(intent, query);
+                } else if (entities.technologies.length > 0) {
+                    response = this.getTechnologyResponse(entities.technologies[0]);
+                } else if (entities.projects.length > 0) {
+                    response = this.getProjectResponse(entities.projects[0]);
+                } else {
+                    response = this.getGeneralResponse(query);
+                }
+                
+                // Add context-aware enhancements
+                if (context.length > 0) {
+                    response = this.addContextualEnhancements(response, context[0], query);
+                }
+                
+                // Add personality
+                response = PersonalitySystem.addPersonality(response, query, intent.intent);
+                
+                return response;
+            },
+
+            getHighConfidenceResponse(intent, query) {
+                if (intent.intent === 'greetings') {
+                    return NLU.intents.greetings.responses[
+                        Math.floor(Math.random() * NLU.intents.greetings.responses.length)
+                    ];
+                }
+                return generateResponse(query);
+            },
+
+            getTechnologyResponse(tech) {
+                if (krishnaKB.responses.technical_elaborations[tech]) {
+                    const baseResponse = krishnaKB.responses.technical_elaborations[tech];
+                    const transition = PersonalitySystem.transitionPhrases.elaboration[
+                        Math.floor(Math.random() * PersonalitySystem.transitionPhrases.elaboration.length)
+                    ];
+                    return `${transition} ${tech}: ${baseResponse}`;
+                }
+                return null;
+            },
+
+            getProjectResponse(project) {
+                if (krishnaKB.responses.project_details[project]) {
+                    const details = krishnaKB.responses.project_details[project];
+                    return `Let me share my experience with the ${project} project:
+                    \n🔍 Challenges: ${details.challenges}
+                    \n💡 Implementation: ${details.implementation}
+                    \n📚 Key Learnings: ${details.learning}`;
+                }
+                return null;
+            },
+
+            getGeneralResponse(query) {
+                return generateResponse(query);
+            },
+
+            addContextualEnhancements(response, lastContext, currentQuery) {
+                // Add smooth transitions based on context
+                if (this.isFollowUpQuestion(currentQuery, lastContext.message)) {
+                    const transition = PersonalitySystem.transitionPhrases.elaboration[
+                        Math.floor(Math.random() * PersonalitySystem.transitionPhrases.elaboration.length)
+                    ];
+                    response = `${transition}, ${response}`;
+                }
+                
+                // Add relevant connections
+                if (this.hasRelatedContent(response, lastContext.response)) {
+                    const transition = PersonalitySystem.transitionPhrases.addition[
+                        Math.floor(Math.random() * PersonalitySystem.transitionPhrases.addition.length)
+                    ];
+                    response += `\n\n${transition}, this relates to our previous discussion about ${this.extractMainTopic(lastContext.message)}.`;
+                }
+                
+                return response;
+            },
+
+            isFollowUpQuestion(currentQuery, lastQuery) {
+                const followUpIndicators = ['more', 'also', 'and', 'what about', 'how about', 'tell me more'];
+                return followUpIndicators.some(indicator => currentQuery.toLowerCase().includes(indicator));
+            },
+
+            hasRelatedContent(response, lastResponse) {
+                const words1 = response.toLowerCase().split(' ');
+                const words2 = lastResponse.toLowerCase().split(' ');
+                const commonWords = words1.filter(word => words2.includes(word) && word.length > 4);
+                return commonWords.length >= 2;
+            },
+
+            extractMainTopic(message) {
+                const topics = ['projects', 'technical skills', 'education', 'experience', 'background'];
+                for (const topic of topics) {
+                    if (message.toLowerCase().includes(topic)) {
+                        return topic;
+                    }
+                }
+                return 'that topic';
+            }
+        };
+
+        // Update generateEnhancedResponse to use the new dynamic response system
+        async function generateEnhancedResponse(query) {
+            const intentMatch = NLU.detectIntent(query);
+            const entities = NLU.extractEntities(query);
+            const relevantContext = conversationContext.getRelevantContext(query);
+            
+            const response = DynamicResponseGenerator.generateResponse(
+                query,
+                intentMatch,
+                entities,
+                relevantContext
+            );
+            
+            conversationContext.addToContext(query, response);
+            return response;
+        }
+
+        // Update processCommand to use enhanced response generation
+        async function processCommand(cmd) {
+            const trimmedCmd = cmd.trim();
+            
+            if (trimmedCmd === '') return;
+            
+            commandHistory.unshift(trimmedCmd);
+            historyIndex = -1;
+            
+            addOutput(`<span class="terminal_prompt--user">krishna@portfolio</span><span class="terminal_prompt--location">~/workspace</span><span class="terminal_prompt--bling">$</span> ${cmd}`);
+            
+            const typingIndicator = showTypingIndicator();
+            
+            try {
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 500));
+                
+                const response = await generateEnhancedResponse(trimmedCmd);
+                
+                typingIndicator.remove();
+                
+                const responseDiv = document.createElement('div');
+                responseDiv.className = 'output-line';
+                responseDiv.innerHTML = '';
+                output.appendChild(responseDiv);
+                
+                await displayProgressively(response, responseDiv);
+                
+            } catch (error) {
+                console.error('Error processing command:', error);
+                typingIndicator.remove();
+                addOutput('An error occurred while processing your request.', 'error-output');
+            }
+        }
+
+        input.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const cmd = input.value;
+                input.value = '';
+                await processCommand(cmd);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    if (historyIndex === -1) currentInput = input.value;
+                    historyIndex++;
+                    input.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex > -1) {
+                    historyIndex--;
+                    input.value = historyIndex === -1 ? currentInput : commandHistory[historyIndex];
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                const partial = input.value.toLowerCase();
+                const matches = Object.keys(commands).filter(cmd => cmd.startsWith(partial));
+                if (matches.length === 1) {
+                    input.value = matches[0];
+                } else if (matches.length > 1) {
+                    addOutput(`\nPossible commands:\n${matches.join(', ')}`, 'suggestion-box');
+                }
+            }
+        });
+
+        // Keep focus on input
+        document.addEventListener('click', () => input.focus());
+        input.focus();
+
+        // Prevent cursor from leaving the input
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+            }
+        });
+
+        // Add new commands for natural interaction
+        Object.assign(commands, {
+            experience: {
+                description: 'View my work experience',
+                execute: () => contextualResponses.experience()
+            },
+            "tell me about yourself": {
+                description: 'Learn about Krishna',
+                execute: () => contextualResponses.about()
+            },
+            "who are you": {
+                description: 'Learn about Krishna (alias)',
+                execute: () => contextualResponses.about()
+            }
+        });
+
+        let modelStatus = 'loading';
+        const modelStatusDiv = document.getElementById('modelStatus');
+
+        // Initialize the model
+        async function loadModel() {
+            try {
+                modelStatus = 'loading';
+                modelStatusDiv.className = 'model-status model-loading';
+                modelStatusDiv.innerHTML = '<span class="loading-spinner"></span>Loading ML Model...';
+
+                encoder = await use.load();
+                
+                modelStatus = 'ready';
+                modelStatusDiv.className = 'model-status model-ready';
+                modelStatusDiv.innerHTML = '✓ ML Model Ready';
+                
+                // Hide the status after 3 seconds
+                setTimeout(() => {
+                    modelStatusDiv.style.opacity = '0';
+                    setTimeout(() => {
+                        modelStatusDiv.style.display = 'none';
+                    }, 500);
+                }, 3000);
+
+                console.log('Universal Sentence Encoder loaded');
+            } catch (err) {
+                modelStatus = 'error';
+                modelStatusDiv.className = 'model-status model-error';
+                modelStatusDiv.innerHTML = '⚠️ Using Basic Mode (ML Failed to Load)';
+                console.error('Error loading model:', err);
+            }
+        }
+
+        // Get embeddings for text
+        async function getEmbedding(text) {
+            const embeddings = await encoder.embed(text);
+            return embeddings;
+        }
+
+        // Calculate similarity between two texts
+        async function calculateSimilarity(text1, text2) {
+            const embeddings1 = await getEmbedding([text1]);
+            const embeddings2 = await getEmbedding([text2]);
+            
+            // Calculate cosine similarity
+            const similarity = tf.matMul(embeddings1, embeddings2, false, true);
+            return similarity.dataSync()[0];
+        }
+
+        // Enhanced query understanding with better fallback
+        async function processQueryWithML(query) {
+            if (modelStatus !== 'ready') {
+                console.log('Model not ready, using basic matching');
+                return findBestMatch(query);
+            }
+
+            try {
+                const intents = {
+                    about: ['tell me about yourself', 'who are you', 'describe yourself'],
+                    skills: ['what are your skills', 'what can you do', 'your expertise'],
+                    projects: ['show me your projects', 'what have you built', 'your work'],
+                    education: ['educational background', 'where did you study', 'academic history'],
+                    contact: ['how to reach you', 'contact information', 'how to connect']
+                };
+
+                let bestIntent = null;
+                let highestSimilarity = -1;
+
+                for (const [intent, examples] of Object.entries(intents)) {
+                    for (const example of examples) {
+                        const similarity = await calculateSimilarity(query, example);
+                        if (similarity > highestSimilarity && similarity > 0.5) {
+                            highestSimilarity = similarity;
+                            bestIntent = intent;
+                        }
+                    }
+                }
+
+                return bestIntent || findBestMatch(query);
+            } catch (error) {
+                console.error('Error in ML processing:', error);
+                return findBestMatch(query);
+            }
+        }
+
+        // Load model when page loads
+        window.addEventListener('load', loadModel);
+
+        // Initialize with welcome message
+        window.addEventListener('load', async () => {
+            const welcomeDiv = document.createElement('div');
+            welcomeDiv.className = 'output-line success-output';
+            welcomeDiv.innerHTML = '';
+            output.appendChild(welcomeDiv);
+            await displayProgressively("Welcome to Krishna's Portfolio Terminal! I'm an AI assistant that can help you learn about Krishna's work and experience. Type 'help' to see available commands, or just ask me anything naturally!", welcomeDiv);
+        });
+
+        // Prevent scroll jumps during typing
+        let isScrolling = false;
+        document.querySelector('.terminal_body').addEventListener('scroll', () => {
+            if (!isScrolling) {
+                isScrolling = true;
+                requestAnimationFrame(() => {
+                    isScrolling = false;
+                });
+            }
+        });
+
+        // Handle window resize for smooth scrolling
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const terminal = document.querySelector('.terminal_body');
+                terminal.scrollTop = terminal.scrollHeight;
+            }, 100);
+        });
+
+        // Function to show typing indicator
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                indicator.appendChild(dot);
+            }
+            
+            output.appendChild(indicator);
+            smoothScrollToBottom();
+            return indicator;
+        }
+
+        // Function to display text progressively
+        async function displayProgressively(text, element) {
+            const words = text.split(' ');
+            let currentText = '';
+            
+            for (const word of words) {
+                currentText += word + ' ';
+                element.innerHTML = currentText;
+                smoothScrollToBottom();
+                // Random delay between 20-50ms per word
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 30 + 20));
+            }
+        }
+
+        // Update generateResponse to handle natural language better
+        function generateResponse(query) {
+            query = query.toLowerCase().trim();
+            
+            // Direct command match
+            if (commands[query]) {
+                return commands[query].execute();
+            }
+            
+            // Natural language processing
+            if (query.includes('tell me about') || query.includes('who are you')) {
+                return commands.about.execute();
+            }
+            
+            if (query.includes('skills') || query.includes('what can you do')) {
+                return commands.skills.execute();
+            }
+            
+            if (query.includes('projects') || query.includes('what have you built')) {
+                return commands.projects.execute();
+            }
+            
+            if (query.includes('contact') || query.includes('how can i reach')) {
+                return commands.contact.execute();
+            }
+            
+            if (query.includes('education') || query.includes('where did you study')) {
+                return commands.education.execute();
+            }
+            
+            // Check for close matches using Levenshtein distance
+            const closestCmd = findClosestCommand(query);
+            if (closestCmd) {
+                return `Did you mean '${closestCmd}'? Try that command instead.`;
+            }
+            
+            // Default response
+            return `I'm not sure how to respond to "${query}". Try these:
+            • Type 'help' to see available commands
+            • Ask about my skills, projects, or education
+            • Ask how to contact me
+            • Or try rephrasing your question`;
+        }
+
+        // Context-aware response generation
+        const contextualResponses = {
+            greetings: () => {
+                const responses = [
+                    "Hello! 👋 How can I help you today?",
+                    "Hi there! Feel free to ask me anything about Krishna's background or projects.",
+                    "Greetings! I'm here to tell you about Krishna's experience and skills."
+                ];
+                return responses[Math.floor(Math.random() * responses.length)];
+            },
+            
+            about: () => commands.about.execute(),
+            
+            experience: () => `Here's a summary of Krishna's experience:
+                \n💼 Technical Experience:
+                • Full-stack development with MERN stack (2+ years)
+                • Machine Learning and Computer Vision projects
+                • Open source contributions
+                \n🏆 Achievements:
+                • Built and deployed multiple production applications
+                • Developed ML models with high accuracy
+                • Active in competitive programming
+                \nWould you like to know more about any specific area?`
+        };
+    </script>
+</body>
+</html> 
